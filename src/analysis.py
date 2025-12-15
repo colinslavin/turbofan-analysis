@@ -104,3 +104,72 @@ def sensor_alarm_summary(df, sensors, z_threshold, roll_window, sustain_count):
             "engines_with_alarm": len(alarms)
         })
     return pd.DataFrame(rows).sort_values("median_warning", ascending=False, na_position="last")
+
+def _first_sustained_alarm_ctf_on_series(
+    g: pd.DataFrame,
+    value_col: str,
+    threshold: float,
+    roll_window: int,
+    sustain_count: int
+) -> Optional[float]:
+    """
+    Sustained alarm on a single value column (e.g., health_score_roll):
+    alarm when >= sustain_count of last roll_window points exceed threshold.
+    Returns cycles_to_failure at first sustained alarm, else None.
+    """
+    g = g.sort_values('cycle').reset_index(drop=True)
+
+    exceed = (g[value_col] > threshold).astype(int)
+    hits = exceed.rolling(roll_window, min_periods=roll_window).sum()
+
+    alarm_pos = hits[hits >= sustain_count].index
+    if len(alarm_pos) == 0:
+        return None
+
+    first_pos = int(alarm_pos[0])
+    return float(g.loc[first_pos, 'cycles_to_failure'])
+
+
+def composite_alarm_summary(
+    df: pd.DataFrame,
+    value_col: str,
+    threshold: float,
+    roll_window: int,
+    sustain_count: int
+) -> pd.DataFrame:
+    """
+    Produces p25/median/p75 warning time summary for the composite alarm.
+    """
+    alarms = []
+    for _, g in df.groupby('engine_id'):
+        ctf = _first_sustained_alarm_ctf_on_series(g, value_col, threshold, roll_window, sustain_count)
+        if ctf is not None:
+            alarms.append(ctf)
+
+    ser = pd.Series(alarms)
+    return pd.DataFrame([{
+        "metric": value_col,
+        "threshold": threshold,
+        "roll_window": roll_window,
+        "sustain_count": sustain_count,
+        "p25_warning": float(ser.quantile(0.25)) if len(ser) else None,
+        "median_warning": float(ser.median()) if len(ser) else None,
+        "p75_warning": float(ser.quantile(0.75)) if len(ser) else None,
+        "engines_with_alarm": int(len(alarms))
+    }])
+
+
+def healthy_false_positive_rate(
+    df: pd.DataFrame,
+    value_col: str,
+    threshold: float,
+    healthy_col: str = "is_healthy"
+) -> float:
+    """
+    Fraction of healthy points that would be considered 'alarming' (value > threshold).
+    Lower is better.
+    """
+    healthy = df[df[healthy_col]].copy()
+    if len(healthy) == 0:
+        return float("nan")
+    return float((healthy[value_col] > threshold).mean())

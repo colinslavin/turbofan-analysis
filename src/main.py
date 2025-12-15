@@ -5,11 +5,16 @@ from src.analysis import (
     compute_composite_health_score,
     add_rolling_health_score,
     sensor_alarm_summary,
+    composite_alarm_summary, 
+    healthy_false_positive_rate,
 )
 from src.visualize import plot_sensor_with_threshold, plot_health_score
 from src.config import (
     DRIFT_SENSORS, HEALTHY_CUTOFF, Z_THRESHOLD,
-    ROLL_WINDOW, SUSTAIN_COUNT
+    ROLL_WINDOW, SUSTAIN_COUNT, HEALTH_SCORE_THRESHOLD, 
+    HEALTH_SCORE_ROLL_WINDOW, HEALTH_SCORE_SUSTAIN_COUNT, 
+    MAX_FP_RATE
+
 )
 
 def main():
@@ -23,7 +28,6 @@ def main():
         roll_window=ROLL_WINDOW,
         sustain_count=SUSTAIN_COUNT
     )
-    print(ranking.head(10).to_string(index=False))
 
     summary = sensor_alarm_summary(
         df,
@@ -33,11 +37,29 @@ def main():
         sustain_count=SUSTAIN_COUNT
     )
 
-    print("\nSensor alarm summary (sustained alarms):")
+    print("\n=== Sensor-level sustained alarms ===")
+    print(ranking.head(10).to_string(index=False))
+
+    print("\n=== Sensor alarm distribution summary ===")
     print(summary.head(10).to_string(index=False))
 
     df = compute_composite_health_score(df, DRIFT_SENSORS)
-    df = add_rolling_health_score(df, ROLL_WINDOW)
+    df = add_rolling_health_score(df, HEALTH_SCORE_ROLL_WINDOW)
+    fp_rate = healthy_false_positive_rate(df, "health_score_roll", HEALTH_SCORE_THRESHOLD)
+    print(f"\nComposite healthy false-positive rate: {fp_rate:.4f} (target <= {MAX_FP_RATE})")
+
+    comp = composite_alarm_summary(
+        df,
+        value_col="health_score_roll",
+        threshold=HEALTH_SCORE_THRESHOLD,
+        roll_window=HEALTH_SCORE_ROLL_WINDOW,
+        sustain_count=HEALTH_SCORE_SUSTAIN_COUNT
+    )
+
+    print("\nComposite alarm summary:")
+    print(comp.to_string(index=False))
+
+
 
     # Quick visuals (same as before)
     plot_sensor_with_threshold(df, engine_id=1, sensor='sensor_13', z_threshold=Z_THRESHOLD)

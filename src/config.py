@@ -17,3 +17,11 @@ MIN_CYCLE = 1
 
 ROLL_WINDOW = 5        # rolling window length (cycles)
 SUSTAIN_COUNT = 3      # require >= this many threshold hits within the window
+
+HEALTH_SCORE_THRESHOLD = 1.2   # starting point; we'll tune after you see output
+HEALTH_SCORE_ROLL_WINDOW = 10  # smoother than 5 for composite
+HEALTH_SCORE_SUSTAIN_COUNT = 6 # require 6 of last 10 above threshold
+
+# False-positive check window (during healthy period)
+FP_HEALTHY_CUTOFF = 150        # reuse same healthy cutoff unless you want different
+MAX_FP_RATE = 0.02             # <=2% of healthy points may alarm (target)
