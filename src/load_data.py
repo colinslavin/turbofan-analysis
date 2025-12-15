@@ -23,7 +23,7 @@ def load_train_data(rel_path: str) -> pd.DataFrame:
 
 def load_test_data(path: str) -> pd.DataFrame:
     """
-    Load NASA C-MAPSS test data (no failure observed in file).
+    Load test data (no failure observed in file).
     RUL labels come from separate file.
     """
     df = pd.read_csv(

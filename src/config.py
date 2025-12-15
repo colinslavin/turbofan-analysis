@@ -14,3 +14,6 @@ Z_THRESHOLD = 2.0
 
 # How many initial cycles to ignore (optional; sometimes cycle 1 is noisy)
 MIN_CYCLE = 1
+
+ROLL_WINDOW = 5        # rolling window length (cycles)
+SUSTAIN_COUNT = 3      # require >= this many threshold hits within the window

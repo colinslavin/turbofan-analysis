@@ -4,7 +4,6 @@ from typing import List
 
 def plot_sensor_engine(df: pd.DataFrame, engine_id: int, sensor: str) -> None:
     g = df[df['engine_id'] == engine_id].sort_values('cycle')
-
     plt.figure()
     plt.plot(g['cycle'], g[sensor])
     plt.xlabel('Cycle')
@@ -14,7 +13,6 @@ def plot_sensor_engine(df: pd.DataFrame, engine_id: int, sensor: str) -> None:
 
 def plot_sensor_with_threshold(df: pd.DataFrame, engine_id: int, sensor: str, z_threshold: float) -> None:
     g = df[df['engine_id'] == engine_id].sort_values('cycle')
-
     plt.figure()
     plt.plot(g['cycle'], g[sensor])
     plt.axhline(z_threshold, linestyle='--')
@@ -26,7 +24,6 @@ def plot_sensor_with_threshold(df: pd.DataFrame, engine_id: int, sensor: str, z_
 
 def plot_health_score(df: pd.DataFrame, engine_id: int) -> None:
     g = df[df['engine_id'] == engine_id].sort_values('cycle')
-
     plt.figure()
     plt.plot(g['cycle'], g['health_score'])
     plt.xlabel('Cycle')
